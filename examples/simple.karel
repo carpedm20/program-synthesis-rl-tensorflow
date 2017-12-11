@@ -1,0 +1,6 @@
+move()
+move()
+repeat(3):
+    turn_left()
+move()
+move()
