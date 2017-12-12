@@ -4,15 +4,17 @@ import lexer
 tokens = lexer.tokens
 
 def p_prog(p):
-    '''prog : DEF RUN stmt'''
+    '''prog : DEF RUN LPAREN RPAREN COLON stmt'''
 
 def p_stmt(p):
-    '''stmt : WHILE LPAREN cond RPAREN COLON stmt
+    '''stmt : WHILE LPAREN RPAREN COLON stmt
             | REPEAT LPAREN cste RPAREN COLON stmt
             | stmt SEMI stmt
+            | stmt NEWLINE stmt
             | action
             | IF LPAREN cond RPAREN COLON stmt
             | IFELSE LPAREN cond RPAREN COLON stmt ELSE stmt
+            | empty
     '''
 
 def p_cond(p):
@@ -25,43 +27,34 @@ def p_cond(p):
     '''
 
 def p_action(p):
-    '''cond : MOVE LPAREN RPAREN
-            | TURNRIGHT LPAREN RPAREN
-            | TURNLEFT LPAREN RPAREN
-            | PICKMARKER LPAREN RPAREN
-            | PUTMARKER LPAREN RPAREN
+    '''action : MOVE LPAREN RPAREN
+              | TURNRIGHT LPAREN RPAREN
+              | TURNLEFT LPAREN RPAREN
+              | PICKMARKER LPAREN RPAREN
+              | PUTMARKER LPAREN RPAREN
     '''
 
 def p_cste(p):
-    '''cste : NUM0
-            | NUM1
-            | NUM2
-            | NUM3
-            | NUM4
-            | NUM5
-            | NUM6
-            | NUM7
-            | NUM8
-            | NUM9
-            | NUM10
-            | NUM11
-            | NUM12
-            | NUM13
-            | NUM14
-            | NUM15
-            | NUM16
-            | NUM17
-            | NUM18
-            | NUM19
+    '''cste : INT
     '''
 
-yacc.yacc()
+def p_empty(p):
+    """empty :"""
+    pass
+
+def p_error(p):
+    if p:
+        print("Syntax error at '%s'" % p.value)
+    else:
+        print("Syntax error at EOF")
+
+parser = yacc.yacc()
 if __name__ == '__main__':
     example = """
         def run():
             repeat(4):
                 putMarker()
-                move()
+                move();
                 turnLeft()
     """
-    yacc.parse(example)
+    parser.parse(example, debug=True)

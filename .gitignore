@@ -1,6 +1,13 @@
 # Log
 logs
 
+# Data
+*.out
+
+# ply
+parser.out
+parsetab.py
+
 # Created by https://www.gitignore.io/api/python,vim
 
 ### Python ###

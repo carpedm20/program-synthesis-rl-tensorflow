@@ -1,58 +1,50 @@
 import ply.lex as lex
 
 tokens = [
-        'ID', 'LPAREN', 'RPAREN', 'COLON', 'SEMI', #'INT',
-        #'IF', 'IFELSE', 'ELSE',
-        #'FRONTISCLEAR', 'LEFTISCLEAR', 'RIGHTISCLEAR',
-        #'MARKERSPRESENT', 'NOMARKERSPRESENT',
-        #'MOVE', 'TURNRIGHT', 'TURNLEFT',
-        #'PICKMARKER', 'PUTMARKER',
+        'DEF', 'RUN', 
+        'LPAREN', 'RPAREN', 'COLON', 'SEMI', 'INT', 'NEWLINE',
+        'WHILE', 'REPEAT',
+        'IF', 'IFELSE', 'ELSE',
+        'FRONTISCLEAR', 'LEFTISCLEAR', 'RIGHTISCLEAR',
+        'MARKERSPRESENT', 'NOMARKERSPRESENT', 'NOT',
+        'MOVE', 'TURNRIGHT', 'TURNLEFT',
+        'PICKMARKER', 'PUTMARKER',
 ]
 
-# Reserved words
-reserved = {
-    'def': 'DEF',
-    'run': 'RUN',
-    'while': 'WHILE',
-    'repeat': 'REPEAT',
-    'if': 'IF',
-    'ifelse': 'IFELSE',
-    'else': 'ELSE',
-    'frontIsClear': 'FRONTISCLEAR',
-    'leftIsClear': 'LEFTISCLEAR',
-    'rightIsClear': 'RIGHTISCLEAR',
-    'markersPresent': 'MARKERSPRESENT',
-    'noMarkersPresent': 'NOMARKERSPRESENT',
-    'not': 'NOT',
-    'move': 'MOVE',
-    'turnRight': 'TURNRIGHT',
-    'turnLeft': 'TURNLEFT',
-    'pickMarker': 'PICKMARKER',
-    'putMarker': 'PUTMARKER',
-}
-reserved.update({num: 'NUM{}'.format(num) for num in range(20)})
-tokens += reserved.values()
-
 # Tokens
-t_ignore = ' \t\x0c'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_COLON  = r':'
 t_SEMI   = r';'
 
-def t_ID(t):
-    r'[A-Za-z_][\w_]*'
-    t.type = reserved.get(t.value, "ID")
-    return t
+t_DEF = 'def'
+t_RUN = 'run'
+t_WHILE = 'while'
+t_REPEAT = 'repeat'
+t_IF = 'if'
+t_IFELSE = 'ifelse'
+t_ELSE = 'else'
+t_FRONTISCLEAR = 'frontIsClear'
+t_LEFTISCLEAR = 'leftIsClear'
+t_RIGHTISCLEAR = 'rightIsClear'
+t_MARKERSPRESENT = 'markersPresent'
+t_NOMARKERSPRESENT = 'noMarkersPresent'
+t_NOT = 'not'
+t_MOVE = 'move'
+t_TURNRIGHT = 'turnRight'
+t_TURNLEFT = 'turnLeft'
+t_PICKMARKER = 'pickMarker'
+t_PUTMARKER = 'putMarker'
 
 def t_NEWLINE(t):
-    r'\n+'
+    r'\n[ \t]*'
     t.lexer.lineno += t.value.count("\n")
+    return t
 
-#def t_INT(t):
-#    r'\d+'
-#    t.value = int(t.value)
-#    return t
+def t_INT(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
 
 def t_error(t):
     print("Illegal character %s" % repr(t.value[0]))
