@@ -4,8 +4,12 @@ from collections import Counter
 
 from hero import Hero
 
+
 def draw2d(array):
     print("\n".join(["".join(["#" if val > 0 else "." for val in row]) for row in array]))
+
+def border_mask(array, value):
+    array[0,:], array[-1,:], array[:,0], array[:,-1] = value, value, value, value
 
 class Karel(object):
     HERO_CHARS = '<^>v'
@@ -20,7 +24,7 @@ class Karel(object):
             self.rng = rng
 
         self.markers = []
-        if world is not None:
+        if world_path is not None:
             self.parse_world(world_path)
         elif world_size is not None:
             self.random_world(world_size, max_marker_in_cell)
@@ -43,22 +47,38 @@ class Karel(object):
     def end_screen(self):
         pass
 
-    def random_world(self, world_size, max_marker_in_cell):
+    def random_world(self, world_size, max_marker_in_cell, wall_ratio=0.2, marker_ratio=0.3):
         height, width = world_size
 
         if height <= 2 or width <= 2:
             raise Exception(" [!] `height` and `width` should be larger than 2")
 
-        self.world = np.zeros((height, width))
+        # blank world
+        self.world = np.chararray((height, width))
+        self.world[:] = "."
+
+        # wall
+        wall_array = self.rng.rand(height, width)
+
+        self.world[wall_array < wall_ratio] = "#"
+        border_mask(self.world, "#")
 
         # hero
         x, y, direction = self.rng.randint(1, width-1), \
                 self.rng.randint(1, height-1), self.rng.randint(4)
-        self.hero = Hero((x, y), direction)
-
-        # obstacle
+        self.hero = Hero((x, y), ((-1, 0), (1, 0), (0, -1), (0, 1))[direction])
+        self.world[y, x] = '.'
 
         # markers
+        marker_array = self.rng.rand(height, width)
+        marker_array = (wall_array >= wall_ratio) & (marker_array < marker_ratio)
+        border_mask(marker_array, False)
+
+        self.markers = []
+        for (y, x) in zip(*np.where(marker_array > 0)):
+            self.markers.append((x, y))
+
+        self.world = self.world.tolist()
 
     def parse_world(self, world_path):
         directions = {
@@ -114,7 +134,7 @@ class Karel(object):
             1: Hero facing South
             2: Hero facing West
             3: Hero facing East
-            4: Obstacle
+            4: Wall
             5: 0 marker
             6: 1 marker
             7: 2 marker
