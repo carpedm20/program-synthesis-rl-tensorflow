@@ -23,7 +23,7 @@ data_arg = add_argument_group('Data')
 data_arg.add_argument('--data_dir', type=str, default='data')
 data_arg.add_argument('--grid_height', type=int, default=8)
 data_arg.add_argument('--grid_width', type=int, default=8)
-data_arg.add_argument('--max_marker_num_in_single_cell', type=int, default=1)
+data_arg.add_argument('--max_marker_in_cell', type=int, default=1)
 
 # Train
 train_arg = add_argument_group('Train')

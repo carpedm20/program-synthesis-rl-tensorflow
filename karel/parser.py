@@ -28,9 +28,6 @@ class Parser(object):
                   debugfile=self.debugfile,
                   tabmodule=self.tabmodule)
 
-    def run(self, code, **kwargs):
-        return yacc.parse(code, **kwargs)
-
 class KarelParser(Parser):
 
     tokens = [
@@ -121,6 +118,11 @@ class KarelParser(Parser):
         else:
             print("Syntax error at EOF")
 
+    def new_game(self, map=None, map_path=None):
+
+
+    def run(self, code, **kwargs):
+        return yacc.parse(code, **kwargs)
 
 if __name__ == '__main__':
     parser = KarelParser()

@@ -13,18 +13,19 @@ class Karel(object):
     WALL_CHAR = '#'
     EMPTY_CHAR = '.'
 
-    def __init__(self, word=None, world_path=None):
-        self.world = None
-        self.hero = None
-        self.screen = None
-        self.markers = []
-
-        if world_path is not None:
-            self.parse_world(world_path)
-        elif word is not None:
-            self.word = word
+    def __init__(self, world_size=None, world_path=None, max_marker_in_cell=1, rng=None):
+        if rng is None:
+            self.rng = np.random.RandomState(123)
         else:
-            raise Exception(" [!] one of `word` and `world_path` should be passed")
+            self.rng = rng
+
+        self.markers = []
+        if world is not None:
+            self.parse_world(world_path)
+        elif world_size is not None:
+            self.random_world(world_size, max_marker_in_cell)
+        else:
+            raise Exception(" [!] one of `world_size` and `world_path` should be passed")
 
         state = np.zeros_like(self.world, dtype=int)
         self.zero_state = np.tile(np.expand_dims(state, -1), [1, 1, 16])
@@ -41,6 +42,23 @@ class Karel(object):
 
     def end_screen(self):
         pass
+
+    def random_world(self, world_size, max_marker_in_cell):
+        height, width = world_size
+
+        if height <= 2 or width <= 2:
+            raise Exception(" [!] `height` and `width` should be larger than 2")
+
+        self.world = np.zeros((height, width))
+
+        # hero
+        x, y, direction = self.rng.randint(1, width-1), \
+                self.rng.randint(1, height-1), self.rng.randint(4)
+        self.hero = Hero((x, y), direction)
+
+        # obstacle
+
+        # markers
 
     def parse_world(self, world_path):
         directions = {
