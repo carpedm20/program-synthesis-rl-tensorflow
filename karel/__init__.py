@@ -8,13 +8,20 @@ class LogicException(Exception):
 class Karel(object):
     KAREL_CHARS = '<^>v'
     MARKER_CHAR = 'o'
+    WALL_CHAR = '#'
 
-    def __init__(self, map_path):
-        self.map = None
+    def __init__(self, word=None, world_path=None):
+        self.world = None
         self.hero = None
         self.screen = None
         self.markers = []
-        self.construct_map(map_path)
+
+        if world_path is not None:
+            self.parse_world(world_path)
+        elif word is not None:
+            self.word = word
+        else:
+            raise Exception(" [!] one of `word` and `world_path` should be passed")
 
     def __enter__(self):
         self.start_screen()
@@ -29,7 +36,7 @@ class Karel(object):
     def end_screen(self):
         pass
 
-    def construct_map(self, map_path):
+    def parse_world(self, world_path):
         directions = {
             '>': (1, 0),
             '^': (0, 1),
@@ -37,8 +44,8 @@ class Karel(object):
             'v': (0, -1),
         }
 
-        map = [[]]
-        with open(map_path, 'rb') as f:
+        world = [[]]
+        with open(world_path, 'rb') as f:
             for y, line in enumerate(f):
                 row = []
                 for x, char in enumerate(line.strip()):
@@ -48,17 +55,26 @@ class Karel(object):
                     elif char == self.MARKER_CHAR:
                         self.markers.append((x + 1, y + 1))
                         char = '.'
+                    elif char == self.WALL_CHAR:
+                        pass
+                    elif char.isdigit():
+                        for _ in range(int(char)):
+                            self.markers.append((x + 1, y + 1))
+                        char = '.'
+                    else:
+                        raise Exception(" [!] `{}` is not a valid character".format(char))
                     row.append(char)
-                map.append(['#'] + row + ['#'])
+                world.append(['#'] + row + ['#'])
 
-        map.append([])
-        for _ in xrange(len(map[1])):
-            map[0].append('#')
-            map[-1].append('#')
-        self.map = map
+        world.append([])
+        for _ in xrange(len(world[1])):
+            world[0].append('#')
+            world[-1].append('#')
+
+        self.world = world
 
     def draw(self):
-        canvas = np.array(self.map)
+        canvas = np.array(self.world)
 
         for bx, by in self.markers:
             canvas[by][bx] = 'o'
@@ -90,11 +106,11 @@ class Karel(object):
                 self.facing_north, self.facing_south,
                 self.facing_west, self.facing_east,
         ]
-        state = self.zeros_like(self.map)
+        state = self.zeros_like(self.world)
 
-        for jdx, row in enumerate(self.map):
+        for jdx, row in enumerate(self.world):
             for idx, point in enumerate(row):
-                self.map[jdx][idx]
+                self.world[jdx][idx]
 
     def draw_exception(self, exception):
         pass
@@ -133,17 +149,17 @@ class Karel(object):
     def front_is_clear(self):
         next_x = self.hero.position[0] + self.hero.facing[0]
         next_y = self.hero.position[1] + self.hero.facing[1]
-        return self.map[next_y][next_x] == '.'
+        return self.world[next_y][next_x] == '.'
 
     def left_is_clear(self):
         next_x = self.hero.position[0] + self.hero.facing[1]
         next_y = self.hero.position[1] - self.hero.facing[0]
-        return self.map[next_y][next_x] == '.'
+        return self.world[next_y][next_x] == '.'
 
     def right_is_clear(self):
         next_x = self.hero.position[0] - self.hero.facing[1]
         next_y = self.hero.position[1] + self.hero.facing[0]
-        return self.map[next_y][next_x] == '.'
+        return self.world[next_y][next_x] == '.'
 
     def marker_is_present(self):
         return self.hero.position in self.markers
@@ -166,4 +182,3 @@ class Karel(object):
     @property
     def facing_west(self):
         return self.hero.facing[0] == -1
-
