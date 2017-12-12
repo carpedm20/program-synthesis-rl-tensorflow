@@ -9,6 +9,7 @@ class Karel(object):
     KAREL_CHARS = '<^>v'
     MARKER_CHAR = 'o'
     WALL_CHAR = '#'
+    EMPTY_CHAR = '.'
 
     def __init__(self, word=None, world_path=None):
         self.world = None
@@ -22,6 +23,9 @@ class Karel(object):
             self.word = word
         else:
             raise Exception(" [!] one of `word` and `world_path` should be passed")
+
+        state = np.zeros_like(self.world, dtype=int)
+        self.zero_state = np.tile(np.expand_dims(state, -1), [1, 1, 16])
 
     def __enter__(self):
         self.start_screen()
@@ -55,12 +59,12 @@ class Karel(object):
                     elif char == self.MARKER_CHAR:
                         self.markers.append((x + 1, y + 1))
                         char = '.'
-                    elif char == self.WALL_CHAR:
-                        pass
                     elif char.isdigit():
                         for _ in range(int(char)):
                             self.markers.append((x + 1, y + 1))
                         char = '.'
+                    elif char in [self.WALL_CHAR, self.EMPTY_CHAR]:
+                        pass
                     else:
                         raise Exception(" [!] `{}` is not a valid character".format(char))
                     row.append(char)
@@ -83,7 +87,8 @@ class Karel(object):
 
         print("\n".join("".join(row) for row in canvas))
 
-    def get_state(self):
+    @property
+    def state(self):
         """
             Hero facing North
             Hero facing South
@@ -102,11 +107,16 @@ class Karel(object):
             9 marker
             10 marker
         """
+        state = self.zero_state.copy()
+
+        # Hero facing North, South, West, East
+        facing_idx = self.hero.facing[0] * 2 + self.hero.facing[1]
+        state[self.hero.position][facing_idx] = 1
+
         states = [
                 self.facing_north, self.facing_south,
                 self.facing_west, self.facing_east,
         ]
-        state = self.zeros_like(self.world)
 
         for jdx, row in enumerate(self.world):
             for idx, point in enumerate(row):
