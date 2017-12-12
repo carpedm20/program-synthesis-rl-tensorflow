@@ -10,11 +10,9 @@ def p_stmt(p):
     '''stmt : WHILE LPAREN RPAREN COLON stmt
             | REPEAT LPAREN cste RPAREN COLON stmt
             | stmt SEMI stmt
-            | stmt NEWLINE stmt
             | action
             | IF LPAREN cond RPAREN COLON stmt
             | IFELSE LPAREN cond RPAREN COLON stmt ELSE stmt
-            | empty
     '''
 
 def p_cond(p):
@@ -32,6 +30,7 @@ def p_action(p):
               | TURNLEFT LPAREN RPAREN
               | PICKMARKER LPAREN RPAREN
               | PUTMARKER LPAREN RPAREN
+              | empty
     '''
 
 def p_cste(p):
@@ -40,7 +39,6 @@ def p_cste(p):
 
 def p_empty(p):
     """empty :"""
-    pass
 
 def p_error(p):
     if p:
@@ -50,11 +48,5 @@ def p_error(p):
 
 parser = yacc.yacc()
 if __name__ == '__main__':
-    example = """
-        def run():
-            repeat(4):
-                putMarker()
-                move();
-                turnLeft()
-    """
-    parser.parse(example, debug=True)
+    example = """def run(): move();"""
+    print(parser.parse(example))

@@ -2,7 +2,7 @@ import ply.lex as lex
 
 tokens = [
         'DEF', 'RUN', 
-        'LPAREN', 'RPAREN', 'COLON', 'SEMI', 'INT', 'NEWLINE',
+        'LPAREN', 'RPAREN', 'COLON', 'SEMI', 'INT', #'NEWLINE',
         'WHILE', 'REPEAT',
         'IF', 'IFELSE', 'ELSE',
         'FRONTISCLEAR', 'LEFTISCLEAR', 'RIGHTISCLEAR',
@@ -12,6 +12,7 @@ tokens = [
 ]
 
 # Tokens
+t_ignore =' \t'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_COLON  = r':'
@@ -35,11 +36,6 @@ t_TURNRIGHT = 'turnRight'
 t_TURNLEFT = 'turnLeft'
 t_PICKMARKER = 'pickMarker'
 t_PUTMARKER = 'putMarker'
-
-def t_NEWLINE(t):
-    r'\n[ \t]*'
-    t.lexer.lineno += t.value.count("\n")
-    return t
 
 def t_INT(t):
     r'\d+'
