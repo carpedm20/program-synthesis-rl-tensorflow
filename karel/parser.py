@@ -1,6 +1,7 @@
 import yacc as yacc
 import ply.lex as lex
 
+from __init__ import Karel
 
 class Parser(object):
     """
@@ -54,17 +55,17 @@ class KarelParser(Parser):
     t_IF = 'if'
     t_IFELSE = 'ifelse'
     t_ELSE = 'else'
-    t_FRONTISCLEAR = 'frontIsClear'
-    t_LEFTISCLEAR = 'leftIsClear'
-    t_RIGHTISCLEAR = 'rightIsClear'
-    t_MARKERSPRESENT = 'markersPresent'
-    t_NOMARKERSPRESENT = 'noMarkersPresent'
+    t_FRONTISCLEAR = 'front_is_clear'
+    t_LEFTISCLEAR = 'left_is_clear'
+    t_RIGHTISCLEAR = 'right_is_clear'
+    t_MARKERSPRESENT = 'markers_present'
+    t_NOMARKERSPRESENT = 'no_markers_present'
     t_NOT = 'not'
     t_MOVE = 'move'
-    t_TURNRIGHT = 'turnRight'
-    t_TURNLEFT = 'turnLeft'
-    t_PICKMARKER = 'pickMarker'
-    t_PUTMARKER = 'putMarker'
+    t_TURNRIGHT = 'turn_right'
+    t_TURNLEFT = 'turn_left'
+    t_PICKMARKER = 'pick_marker'
+    t_PUTMARKER = 'put_marker'
 
     def t_INT(self, t):
         r'\d+'
@@ -104,6 +105,9 @@ class KarelParser(Parser):
                 | PUTMARKER LPAREN RPAREN
                 | empty
         '''
+        fn_name = p[1]
+        if fn_name is not None:
+            getattr(self.karel, fn_name)()
 
     def p_cste(self, p):
         '''cste : INT
@@ -118,14 +122,21 @@ class KarelParser(Parser):
         else:
             print("Syntax error at EOF")
 
-    def new_game(self, map=None, map_path=None):
-
-
     def run(self, code, **kwargs):
         return yacc.parse(code, **kwargs)
+
+    def new_game(self, **kargvs):
+        self.karel = Karel(**kargvs)
+
+    def draw(self, **kargvs):
+        self.karel.draw(**kargvs)
 
 if __name__ == '__main__':
     parser = KarelParser()
 
-    code = """def run(): move();"""
-    print(parser.run(code))
+    parser.new_game(world_size=(4, 4))
+    parser.draw()
+    code = """def run(): turn_left(); move();"""
+
+    parser.run(code)
+    parser.draw()

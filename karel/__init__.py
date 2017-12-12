@@ -17,7 +17,7 @@ class Karel(object):
     WALL_CHAR = '#'
     EMPTY_CHAR = '.'
 
-    def __init__(self, world_size=None, world_path=None, max_marker_in_cell=1, rng=None):
+    def __init__(self, world_size=None, world_path=None, rng=None, max_marker_in_cell=1):
         if rng is None:
             self.rng = np.random.RandomState(123)
         else:
@@ -181,7 +181,8 @@ class Karel(object):
     # Hero passthroughs
     def move(self):
         if not self.front_is_clear():
-            raise Exception('can\'t move. There is a wall in front of Hero')
+            #raise Exception('can\'t move. There is a wall in front of Hero')
+            pass
         self.hero.move()
 
     def turn_left(self):
@@ -195,11 +196,13 @@ class Karel(object):
                 self.hero.pick_marker()
                 break
         else:
-            raise Exception('can\'t pick marker from empty location')
+            #raise Exception('can\'t pick marker from empty location')
+            pass
 
     def put_marker(self):
         if not self.holding_markers():
-            raise Exception('can\'t put marker. Hero has none')
+            #raise Exception('can\'t put marker. Hero has none')
+            pass
         self.markers.append(self.hero.position)
         self.hero.put_marker()
 
