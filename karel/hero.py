@@ -18,6 +18,12 @@ class Hero(object):
             -self.facing[0]
         )
 
+    def turn_right(self):
+        self.facing = (
+            self.facing[1],
+            self.facing[0]
+        )
+
     def holding_markers(self):
         return (self.marker_bag is None) or self.marker_bag > 0
 

@@ -78,7 +78,7 @@ class Karel(object):
         for (y, x) in zip(*np.where(marker_array > 0)):
             self.markers.append((x, y))
 
-        self.world = self.world.tolist()
+        self.world = self.world.astype(str).tolist()
 
     def parse_world(self, world_path):
         directions = {
@@ -188,6 +188,9 @@ class Karel(object):
     def turn_left(self):
         self.hero.turn_left()
 
+    def turn_right(self):
+        self.hero.turn_right()
+
     def pick_marker(self):
         position = self.hero.position
         for i, coord in enumerate(self.markers):
@@ -222,8 +225,11 @@ class Karel(object):
         next_y = self.hero.position[1] + self.hero.facing[0]
         return self.world[next_y][next_x] == '.'
 
-    def marker_is_present(self):
+    def markers_present(self):
         return self.hero.position in self.markers
+
+    def no_markers_present(self):
+        return self.hero.position not in self.markers
 
     def holding_markers(self):
         return self.hero.holding_markers()
