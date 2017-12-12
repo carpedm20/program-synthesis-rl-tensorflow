@@ -1,12 +1,14 @@
 # Code based on https://github.com/alts/karel
 import numpy as np
+from collections import Counter
+
 from hero import Hero
 
-class LogicException(Exception):
-    pass
+def draw2d(array):
+    print("\n".join(["".join(["#" if val > 0 else "." for val in row]) for row in array]))
 
 class Karel(object):
-    KAREL_CHARS = '<^>v'
+    HERO_CHARS = '<^>v'
     MARKER_CHAR = 'o'
     WALL_CHAR = '#'
     EMPTY_CHAR = '.'
@@ -53,7 +55,7 @@ class Karel(object):
             for y, line in enumerate(f):
                 row = []
                 for x, char in enumerate(line.strip()):
-                    if char in self.KAREL_CHARS:
+                    if char in self.HERO_CHARS:
                         self.hero = Hero((x + 1, y + 1), directions[char])
                         char = '.'
                     elif char == self.MARKER_CHAR:
@@ -80,8 +82,8 @@ class Karel(object):
     def draw(self):
         canvas = np.array(self.world)
 
-        for bx, by in self.markers:
-            canvas[by][bx] = 'o'
+        for (x, y), count in Counter(self.markers).items():
+            canvas[y][x] = str(count)
 
         canvas[self.hero.position[1]][self.hero.position[0]] = self.hero_char()
 
@@ -90,37 +92,45 @@ class Karel(object):
     @property
     def state(self):
         """
-            Hero facing North
-            Hero facing South
-            Hero facing West
-            Hero facing East
-            Obstacle
-            0 marker
-            1 marker
-            2 marker
-            3 marker
-            4 marker
-            5 marker
-            6 marker
-            7 marker
-            8 marker
-            9 marker
-            10 marker
+            0: Hero facing North
+            1: Hero facing South
+            2: Hero facing West
+            3: Hero facing East
+            4: Obstacle
+            5: 0 marker
+            6: 1 marker
+            7: 2 marker
+            8: 3 marker
+            9: 4 marker
+            10: 5 marker
+            11: 6 marker
+            12: 7 marker
+            13: 8 marker
+            14: 9 marker
+            15: 10 marker
         """
         state = self.zero_state.copy()
+        state[:,:,5] = 1
 
-        # Hero facing North, South, West, East
-        facing_idx = self.hero.facing[0] * 2 + self.hero.facing[1]
-        state[self.hero.position][facing_idx] = 1
+        # 0 ~ 3: Hero facing North, South, West, East
+        x, y = self.hero.position
+        state[y, x, self.facing_idx] = 1
 
-        states = [
-                self.facing_north, self.facing_south,
-                self.facing_west, self.facing_east,
-        ]
-
+        # 4: wall or not
         for jdx, row in enumerate(self.world):
-            for idx, point in enumerate(row):
-                self.world[jdx][idx]
+            for idx, char in enumerate(row):
+                if char == self.WALL_CHAR:
+                    state[jdx][idx][4] = 1
+                elif char == self.WALL_CHAR or char in self.HERO_CHARS:
+                    state[:,:,5] = 1
+
+        # 5 ~ 15: marker counter
+        for (x, y), count in Counter(self.markers).items():
+            state[y][x][5] = 0
+            state[y][x][5 + count] = 1
+
+        # draw2d(state[:,:,5])
+        return state
 
     def draw_exception(self, exception):
         pass
@@ -133,7 +143,7 @@ class Karel(object):
     # Hero passthroughs
     def move(self):
         if not self.front_is_clear():
-            raise LogicException('can\'t move. There is a wall in front of Hero')
+            raise Exception('can\'t move. There is a wall in front of Hero')
         self.hero.move()
 
     def turn_left(self):
@@ -147,11 +157,11 @@ class Karel(object):
                 self.hero.pick_marker()
                 break
         else:
-            raise LogicException('can\'t pick marker from empty location')
+            raise Exception('can\'t pick marker from empty location')
 
     def put_marker(self):
         if not self.holding_markers():
-            raise LogicException('can\'t put marker. Hero has none')
+            raise Exception('can\'t put marker. Hero has none')
         self.markers.append(self.hero.position)
         self.hero.put_marker()
 
@@ -192,3 +202,14 @@ class Karel(object):
     @property
     def facing_west(self):
         return self.hero.facing[0] == -1
+
+    @property
+    def facing_idx(self):
+        if self.facing_north:
+            return 0
+        elif self.facing_south:
+            return 1
+        elif self.facing_east:
+            return 2
+        elif self.facing_west:
+            return 3
