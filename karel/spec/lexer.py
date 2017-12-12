@@ -1,7 +1,7 @@
 import ply.lex as lex
 
 tokens = [
-        'ID', 'LPAREN', 'RPAREN', 'COLON', 'SEMI', 'INT',
+        'ID', 'LPAREN', 'RPAREN', 'COLON', 'SEMI', #'INT',
         #'IF', 'IFELSE', 'ELSE',
         #'FRONTISCLEAR', 'LEFTISCLEAR', 'RIGHTISCLEAR',
         #'MARKERSPRESENT', 'NOMARKERSPRESENT',
@@ -30,6 +30,7 @@ reserved = {
     'pickMarker': 'PICKMARKER',
     'putMarker': 'PUTMARKER',
 }
+reserved.update({num: 'NUM{}'.format(num) for num in range(20)})
 tokens += reserved.values()
 
 # Tokens
@@ -48,26 +49,28 @@ def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
 
-def t_INT(t):
-    r'\d+'
-    t.value = int(t.value)
-    return t
+#def t_INT(t):
+#    r'\d+'
+#    t.value = int(t.value)
+#    return t
 
 def t_error(t):
     print("Illegal character %s" % repr(t.value[0]))
     t.lexer.skip(1)
 
 
-lex.lex() 
+lexer = lex.lex() 
 if __name__ == '__main__':
-    example_code = """
-    def run():
-        repeat(4):
-            putMarker()
-            move()
-            turnLeft()
+    lex.runmain(lexer)
+
+    example = """
+        def run():
+            repeat(4):
+                putMarker()
+                move()
+                turnLeft()
     """
-    lex.input(example_code)
+    lex.input(example)
     while True:
         tok = lex.token()
         if not tok: break
