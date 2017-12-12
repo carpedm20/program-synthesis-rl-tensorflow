@@ -3218,7 +3218,7 @@ class ParserReflect(object):
 
 def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, start=None,
          check_recursion=True, optimize=False, write_tables=True, debugfile=debug_file,
-         outputdir=None, debuglog=None, errorlog=None, picklefile=None):
+         outputdir=None, debuglog=None, errorlog=None, picklefile=None, with_grammar=False):
 
     if tabmodule is None:
         tabmodule = tab_module
@@ -3271,8 +3271,6 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
         if '.' not in tabmodule:
             tabmodule = pkg + '.' + tabmodule
 
-
-
     # Set start symbol if it's specified directly using an argument
     if start is not None:
         pdict['start'] = start
@@ -3288,6 +3286,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
     signature = pinfo.signature()
 
     # Read the tables
+    table_error = True
     try:
         lr = LRTable()
         if picklefile:
@@ -3299,7 +3298,11 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
                 lr.bind_callables(pinfo.pdict)
                 parser = LRParser(lr, pinfo.error_func)
                 parse = parser.parse
-                return parser
+
+                if not with_grammar:
+                    return parser
+                else:
+                    table_error = False
             except Exception as e:
                 errorlog.warning('There was a problem loading the table file: %r', e)
     except VersionError as e:
@@ -3359,6 +3362,9 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
 
     if errors:
         raise YaccError('Unable to build parser')
+
+    if with_grammar and not table_error:
+        return parser, grammar
 
     # Verify the grammar structure
     undefined_symbols = grammar.undefined_symbols()
