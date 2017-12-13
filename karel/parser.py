@@ -1,37 +1,9 @@
 import yacc
 import numpy as np
 import ply.lex as lex
-from pyparsing import nestedExpr
 
+from utils import pprint
 from __init__ import Karel
-
-def beautifier(inputs, indent=1, tabspace=2):
-    lines, queue = [], []
-    space = tabspace * " "
-
-    for item in inputs:
-        if item == ";":
-            lines.append(" ".join(queue))
-            queue = []
-        elif type(item) == str:
-            queue.append(item)
-        else:
-            lines.append(" ".join(queue + ["{"]))
-            queue = []
-
-            inner_lines = beautifier(item, indent=indent+1, tabspace=tabspace)
-            lines.extend([space + line for line in inner_lines[:-1]])
-            lines.append(inner_lines[-1])
-
-    if len(queue) > 0:
-        lines.append(" ".join(queue))
-
-    return lines + ["}"]
-
-def pprint(code, tabspace=2):
-    array = nestedExpr('{','}').parseString("{"+code+"}").asList()
-    lines = beautifier(array[0])
-    print("\n".join(lines[:-1]))
 
 class Parser(object):
     """
@@ -40,14 +12,9 @@ class Parser(object):
     tokens = ()
     precedence = ()
 
-    def __init__(self, rng=None, **kwargs):
+    def __init__(self, **kwargs):
         self.names = {}
         self.debug = kwargs.get('debug', 0)
-
-        if rng is None:
-            self.rng = np.random.RandomState(1)
-        else:
-            self.rng = rng
 
         # Build the lexer and parser
         lex.lex(module=self, debug=self.debug)
@@ -98,26 +65,36 @@ class KarelParser(Parser):
     t_PICKMARKER = 'pick_marker'
     t_PUTMARKER = 'put_marker'
 
+
+    def __init__(self, rng=None, min_int=0, max_int=19, **kwargs):
+        super(KarelParser, self).__init__(**kwargs)
+
+        self.min_int = min_int
+        self.max_int = max_int
+
+        if rng is None:
+            self.rng = np.random.RandomState(1)
+        else:
+            self.rng = rng
+
+
     #########
     # lexer
     #########
-
-    MIN_INT = 0
-    MAX_INT = 19
 
     def t_INT(self, t):
         r'\d+'
 
         value = int(t.value)
-        if not (self.MIN_INT <= value <= self.MAX_INT):
+        if not (self.min_int <= value <= self.max_int):
             raise Exception(" [!] Out of range ({} ~ {}): `{}`". \
-                    format(self.MIN_INT, self.MAX_INT, value))
+                    format(self.min_int, self.max_int, value))
 
         t.value = value
         return t
 
     def random_INT(self):
-        return self.rng.randint(self.MIN_INT, self.MAX_INT + 1)
+        return self.rng.randint(self.min_int, self.max_int + 1)
 
     def t_error(self, t):
         print("Illegal character %s" % repr(t.value[0]))
@@ -193,7 +170,10 @@ class KarelParser(Parser):
     def draw(self, **kwargs):
         self.karel.draw(**kwargs)
 
-    def random_generate(self, start_token="prog", depth=0, stmt_max_depth=3):
+    def random_code(self, **kwargs):
+        return " ".join(self.random_tokens(**kwargs))
+
+    def random_tokens(self, start_token="prog", depth=0, stmt_max_depth=3):
         if start_token == 'stmt' and depth > stmt_max_depth:
             start_token = "action"
 
@@ -204,7 +184,7 @@ class KarelParser(Parser):
 
         for term in prod.prod:
             if term in self.prodnames: # need digging
-                codes.extend(self.random_generate(term, depth + 1, stmt_max_depth))
+                codes.extend(self.random_tokens(term, depth + 1, stmt_max_depth))
             else:
                 token = getattr(self, 't_{}'.format(term))
                 if callable(token):
@@ -224,11 +204,12 @@ if __name__ == '__main__':
     parser.new_game(world_size=(4, 4))
     parser.draw()
 
-    code = """def run(): repeat(2): turn_left(); move();"""
+    code = """def run ( ) { ifelse ( not right_is_clear ( ) ) { repeat ( 4 ) { move ( ) } } else { ifelse ( not right_is_clear ( ) ) { pick_marker ( ) ; put_marker ( ) } else { put_marker ( ) } } }"""
     print("RUN:", parser.run(code))
 
     parser.draw()
 
-    for idx in range(100):
+    for idx in range(5):
         print("="*10)
-        pprint(" ".join(parser.random_generate()))
+        code = parser.random_code()
+        print(code)
