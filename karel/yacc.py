@@ -3508,4 +3508,8 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
     parser = LRParser(lr, pinfo.error_func)
 
     parse = parser.parse
-    return parser
+
+    if with_grammar:
+        return parser, grammar
+    else:
+        return parser
