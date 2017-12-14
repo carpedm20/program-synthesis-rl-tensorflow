@@ -1,8 +1,7 @@
 #-*- coding: utf-8 -*-
 import argparse
 
-def str2bool(v):
-    return v.lower() in ('true', '1')
+from utils import str2bool
 
 arg_lists = []
 parser = argparse.ArgumentParser()
@@ -20,7 +19,8 @@ net_arg.add_argument('--channel_dims', type=eval, default='[]', help='')
 
 # Data
 data_arg = add_argument_group('Data')
-data_arg.add_argument('--data_dir', type=str, default='data')
+data_arg.add_argument('--data_dir', type=str, default='karel-dataset/data')
+data_arg.add_argument('--data_ext', type=str, default='npz')
 data_arg.add_argument('--grid_height', type=int, default=8)
 data_arg.add_argument('--grid_width', type=int, default=8)
 data_arg.add_argument('--max_marker_in_cell', type=int, default=1)

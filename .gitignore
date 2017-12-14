@@ -2,6 +2,7 @@
 logs
 
 # Data
+*.npz
 *.out
 
 # ply
