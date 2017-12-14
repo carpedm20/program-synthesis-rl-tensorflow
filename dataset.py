@@ -32,6 +32,9 @@ class Dataset(object):
         for input_, output, code in zip(inputs, outputs, codes):
             yield Data(input_, output, code)
 
+    def count(self, name):
+        return len(self.inputs[name])
+
     def shuffle(self):
         pass
 

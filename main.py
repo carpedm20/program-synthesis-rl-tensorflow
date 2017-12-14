@@ -12,14 +12,21 @@ def main(_):
     prepare(config)
     rng = set_random_seed(config.seed)
 
-    trainer = Trainer(config, rng)
+    sess_config = tf.ConfigProto(
+            log_device_placement=False,
+            allow_soft_placement=True)
+    sess_config.gpu_options.allow_growth=True
 
-    if not config.test:
-        trainer.train()
-    else:
-        if not config.map:
-            raise Exception("[!] You should specify `map` to synthesize a program")
-        trainer.synthesize(config.map)
+    with tf.Session(config=sess_config) as sess:
+        trainer = Trainer(config, rng)
+        summary_writer = tf.summary.FileWriter(config.model_path, sess.graph)
+
+        if not config.test:
+            trainer.train(sess)
+        else:
+            if not config.map:
+                raise Exception("[!] You should specify `map` to synthesize a program")
+            trainer.synthesize(sess, config.map)
 
 if __name__ == "__main__":
     config, unparsed = get_config()

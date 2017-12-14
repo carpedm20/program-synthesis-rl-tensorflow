@@ -19,10 +19,10 @@ net_arg.add_argument('--channel_dims', type=eval, default='[]', help='')
 
 # Data
 data_arg = add_argument_group('Data')
-data_arg.add_argument('--data_dir', type=str, default='karel-dataset/data')
+data_arg.add_argument('--data_dir', type=str, default='karel/data')
 data_arg.add_argument('--data_ext', type=str, default='npz')
-data_arg.add_argument('--grid_height', type=int, default=8)
-data_arg.add_argument('--grid_width', type=int, default=8)
+data_arg.add_argument('--world_height', type=int, default=8)
+data_arg.add_argument('--world_width', type=int, default=8)
 data_arg.add_argument('--max_marker_in_cell', type=int, default=1)
 
 # Train
@@ -35,14 +35,16 @@ train_arg.add_argument('--epoch', type=int, default=100)
 train_arg.add_argument('--lr', type=float, default=0.001)
 train_arg.add_argument('--seed', type=int, default=123)
 train_arg.add_argument('--use_rl', type=str2bool, default=False)
+train_arg.add_argument('--batch_size', type=int, default=64)
 
 # Test
 test_arg = add_argument_group('Test')
-test_arg.add_argument('--test', type=str2bool, default=False)
 test_arg.add_argument('--world', type=str, default=None)
 
 # ETC
 etc_arg = add_argument_group('ETC')
+etc_arg.add_argument('--train', type=str2bool, default=True,
+                     help='whether run under train or test mode')
 etc_arg.add_argument('--tag', type=str, default='karel')
 etc_arg.add_argument('--log_level', type=str, default='info')
 

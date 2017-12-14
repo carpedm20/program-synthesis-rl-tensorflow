@@ -13,6 +13,13 @@ TensorFlow implementation of [Leveraging Grammar and Reinforcement Learning for 
 
 ## Usage
 
+Prepare with:
+
+    $ git clone git@github.com:carpedm20/program-synthesis-rl-tensorflow.git
+    $ cd program-synthesis-rl-tensorflow
+    $ git clone https://github.com/carpedm20/karel-dataset karel # prepare
+    $ pip install -r requirements.txt
+
 To train a model:
 
     $ python main.py
