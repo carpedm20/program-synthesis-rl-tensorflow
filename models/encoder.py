@@ -1,17 +1,16 @@
 import tensorflow as tf
 
-def encoder(input_grid, output_grid, scope="encoder"):
-    with tf.variable_scope(scope):
-        input_enc = conv2d(
-                input_grid, 32, name="input_conv")
-        output_enc = conv2d(
-                output_grid, 32, name="output_conv")
+def encoder_fn(inputs, outputs):
+    input_enc = cnn_encoder(inputs, scope="input")
+    output_enc = cnn_encoder(outputs, scope="output", reuse=True)
+    return input_enc, output_enc
 
-        grid_enc = tf.concat(
-                [input_enc, output_enc], -1, name="grid_enc")
+def cnn_encoder(inputs, scope, reuse=False):
+    with tf.variable_scope("{}_embed".format(scope)):
+        enc = conv2d(inputs, 32)
 
+    with tf.variable_scope("{}_res".format(scope), reuse=reuse):
         conv_fn = lambda inputs, name: conv2d(inputs, 64, name)
-
         res1 = residual_block(grid_enc, conv_fn, 3, "res1")
         res2 = residual_block(res1, conv_fn, 3, "res2")
 

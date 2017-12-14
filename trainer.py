@@ -2,40 +2,26 @@ from tqdm import tqdm
 import tensorflow as tf
 from models import encoder, decoder
 
+from models import Model
 from dataset import KarelDataset
 from karel.parser import KarelParser
 
 class Trainer(object):
-    def __init__(self, config, rng=None):
+    def __init__(self, config, sess, rng=None):
+        self.sess = sess
         self.config = config
 
         self.karel_dataset = KarelDataset(config, rng)
 
-    def train(self, sess):
+    def train(self):
+        token_num = len(KarelParser.tokens)
+        inputs, outputs, codes = self.karel_dataset.get_data('train')
+
+        self.model = Model(self.config, inputs, outputs, codes, token_num)
 
         for epoch in range(self.config.epoch):
-            for data in tqdm(self.dataset.epoch('train'),
-                             total=self.dataset.count('train'),
-                             desc="Epoch {:3d}".format(epoch)):
-                self.train_epoch(sess)
+            self.model.update(self.sess)
 
-    def train_epoch(self, sess):
+    def test(self):
+        inputs, outputs, codes = self.karel_dataset.get_data('train')
         pass
-
-    def synthesize(self, sess):
-        pass
-
-    def get_iterator(self):
-        tf_data = tf.data.Dataset.from_tensor_slices((
-                self.karel_dataset.inputs['train'],
-                self.karel_dataset.outputs['train'],
-                self.karel_dataset.codes['train'],
-        ))
-
-        if self.config.train:
-            batch_size = self.config.batch_size
-        else:
-            batch_size = 1
-
-        batched_dataset = dataset.batch(batch_size)
-        return batched_dataset.make_one_shot_iterator()

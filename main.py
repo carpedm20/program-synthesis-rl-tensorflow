@@ -18,11 +18,11 @@ def main(_):
     sess_config.gpu_options.allow_growth=True
 
     with tf.Session(config=sess_config) as sess:
-        trainer = Trainer(config, rng)
+        trainer = Trainer(config, sess, rng)
         summary_writer = tf.summary.FileWriter(config.model_path, sess.graph)
 
-        if not config.test:
-            trainer.train(sess)
+        if config.train:
+            trainer.train()
         else:
             if not config.map:
                 raise Exception("[!] You should specify `map` to synthesize a program")

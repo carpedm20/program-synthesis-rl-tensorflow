@@ -1,2 +1,1 @@
-from encoder import *
-from decoder import *
+from main import Model
