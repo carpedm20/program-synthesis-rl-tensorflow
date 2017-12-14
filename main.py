@@ -4,18 +4,15 @@ import tensorflow as tf
 
 from trainer import Trainer
 from config import get_config
-from utils import prepare_dirs, save_config
+from utils import prepare, set_random_seed
 
 config = None
 
 def main(_):
-    prepare_dirs(config)
-
-    rng = np.random.RandomState(config.seed)
-    tf.set_random_seed(config.seed)
+    prepare(config)
+    rng = set_random_seed(config.seed)
 
     trainer = Trainer(config, rng)
-    save_config(config.model_dir, config)
 
     if not config.test:
         trainer.train()

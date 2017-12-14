@@ -1,10 +1,19 @@
 import os
+import json
 import errno
 import signal
+import logging
 import numpy as np
+import tensorflow as tf
 from functools import wraps
+from datetime import datetime
 from pyparsing import nestedExpr
 
+logger = logging.getLogger(__name__)
+
+
+def get_time():
+  return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def str2bool(v):
     return v.lower() in ('true', '1')
@@ -72,10 +81,58 @@ def beautify(code, tabspace=2):
 
 def makedirs(path):
     if not os.path.exists(path):
-        print(" [*] Make directories : {}".format(path))
+        logger.info("[MAKE] directory: {}".format(path))
         os.makedirs(path)
 
 def get_rng(rng, seed=123):
     if rng is None:
         rng = np.random.RandomState(seed)
+    return rng
+
+def load_config(config, skip_list=[]):
+    config_keys = vars(config).keys()
+    config_path = os.path.join(config.load_path, PARAMS_NAME)
+
+    with open(path) as fp:
+        new_config = json.load(fp)
+
+    for key, value in new_config.items():
+        if key in skip_list:
+            continue
+
+        original_value = getattr(config, key)
+        if original_value != value:
+            logger.info("[UPDATE] config `{}`: {} -> {}".format(key, getattr(config, key), value))
+            setattr(config, key, value)
+
+def save_config(config, config_filename='config.json'):
+    config_path = os.path.join(config.model_path, config_filename)
+    with open(config_path, 'w') as fp:
+        json.dump(config.__dict__, fp, indent=4, sort_keys=True)
+    logger.info('[SAVE] config: {}'.format(config_path))
+
+def prepare(config):
+    formatter = logging.Formatter(
+            "%(levelname)s:%(asctime)s::%(message)s")
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+    logger.setLevel(tf.logging.INFO)
+
+    if config.model_path is None:
+        config.model_name = "{}_{}".format(config.tag, get_time())
+        config.model_path = os.path.join(config.base_dir, config.model_name)
+
+        makedirs(config.model_path)
+        save_config(config)
+    else:
+        if not config.model_path.startswith(config.base_dir):
+            new_path = os.path.join(config.base_dir, new_path)
+            setattr(config, 'model_path', new_path)
+        logger.info("[SET] model_path: {}".format(config.model_path))
+
+def set_random_seed(seed):
+    tf.set_random_seed(seed)
+    rng = np.random.RandomState(seed)
     return rng

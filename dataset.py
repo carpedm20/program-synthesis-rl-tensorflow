@@ -22,7 +22,6 @@ class Dataset(object):
         }
 
         self.load_data()
-
         if shuffle:
             self.shuffle()
 

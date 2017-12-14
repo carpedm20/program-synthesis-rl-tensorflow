@@ -27,18 +27,24 @@ data_arg.add_argument('--max_marker_in_cell', type=int, default=1)
 
 # Train
 train_arg = add_argument_group('Train')
+train_arg.add_argument('--base_dir', type=str, default='logs')
+train_arg.add_argument('--model_path', type=str, default=None,
+                       help='default is {config.base_dir}/{config.tag}_{timestring}')
+train_arg.add_argument('--pretrain_path', type=str, default=None)
+train_arg.add_argument('--epoch', type=int, default=100)
 train_arg.add_argument('--lr', type=float, default=0.001)
 train_arg.add_argument('--seed', type=int, default=123)
 train_arg.add_argument('--use_rl', type=str2bool, default=False)
-train_arg.add_argument('--pretrain_path', type=str, default=None)
 
 # Test
 test_arg = add_argument_group('Test')
 test_arg.add_argument('--test', type=str2bool, default=False)
-test_arg.add_argument('--map', type=str, default=None)
+test_arg.add_argument('--world', type=str, default=None)
 
 # ETC
 etc_arg = add_argument_group('ETC')
+etc_arg.add_argument('--tag', type=str, default='karel')
+etc_arg.add_argument('--log_level', type=str, default='info')
 
 
 def get_config():
