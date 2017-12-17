@@ -7,7 +7,7 @@ from tensorflow.contrib.seq2seq import TrainingHelper, InferenceHelper
 class Decoder(object):
     def __init__(
             self, config,
-            input_enc, output_enc, code, karel_dataset):
+            encoder_out, codes, karel_dataset):
 
         embed = tf.get_variable(
                 'embedding', [len(symbols), 256], dtype=tf.float32,
@@ -15,23 +15,14 @@ class Decoder(object):
 
         code_embed= tf.nn.embedding_lookup(embed, code)
 
-        input_cell = MultiRNNCell([
-                ConcatOutputAndAttentionWrapper(input_enc),
-                LSTMCell(256),
-                LSTMCell(256)], state_is_tuple=True, name="input_cell")
-
-        output_cell = MultiRNNCell([
-                ConcatOutputAndAttentionWrapper(output_enc),
+        rnn_cell = MultiRNNCell([
+                ConcatOutputAndAttentionWrapper(encoder_out),
                 LSTMCell(256),
                 LSTMCell(256)], state_is_tuple=True, name="output_cell")
 
-        input_rnn = build_rnn(input_cell, name="input_rnn")
-        output_rnn = build_rnn(output_cell, name="output_rnn")
+        decoder_rnn = build_rnn(input_cell, name="decoder_rnn")
 
-        input_pool = tf.max_pool(input_rnn)
-        output_pool = tf.max_pool(output_rnn)
-
-        linear()
+        tf.map()
 
         if config.use_syntax:
             syntax_cell = MultiRNNCell([

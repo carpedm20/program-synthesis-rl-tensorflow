@@ -46,6 +46,9 @@ class Dataset(object):
         iterator = batched_data.make_one_shot_iterator()
         inputs, outputs, codes = iterator.get_next()
 
+        inputs = tf.cast(inputs, tf.float32)
+        outputs = tf.cast(outputs, tf.float32)
+
         return inputs, outputs, codes
 
     def get_data(self, name):

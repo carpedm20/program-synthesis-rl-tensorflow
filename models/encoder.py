@@ -1,29 +1,28 @@
+import numpy as np
 import tensorflow as tf
 
 def encoder_fn(inputs, outputs):
-    input_enc = cnn_encoder(inputs, scope="input")
-    output_enc = cnn_encoder(outputs, scope="output", reuse=True)
-    return input_enc, output_enc
+    with tf.variable_scope("encoder"):
+        input_enc = conv2d(inputs, 32, name="input")
+        output_enc = conv2d(outputs, 32, name="output")
 
-def cnn_encoder(inputs, scope, reuse=False):
-    with tf.variable_scope("{}_embed".format(scope)):
-        enc = conv2d(inputs, 32)
+        conv_fn = lambda x, name: conv2d(x, 64, name=name)
 
-    with tf.variable_scope("{}_res".format(scope), reuse=reuse):
-        conv_fn = lambda inputs, name: conv2d(inputs, 64, name)
+        grid_enc = tf.concat([input_enc, output_enc], -1)
         res1 = residual_block(grid_enc, conv_fn, 3, "res1")
         res2 = residual_block(res1, conv_fn, 3, "res2")
 
     return linear(flatten(res2), 512)
 
 def linear(inputs, output):
-    return tf.layers.linear(inputs, output)
+    return tf.layers.dense(inputs, output)
 
-def flatten(inputs, batch_size):
-    name = "flat_{}".format(inputs.name)
-    return tf.reshape(inputs, [batch_size, -1], name)
+def flatten(inputs):
+    shape = int_shape(inputs)
+    last_dim = np.prod(shape[1:])
+    return tf.reshape(inputs, [-1, last_dim], name="flat")
 
-def res_block(
+def residual_block(
         inputs, conv_fn, depth, name="res_block"):
     with tf.variable_scope(name):
         out = inputs
@@ -48,3 +47,6 @@ def conv2d(
             name=name,
     )
     return out
+
+def int_shape(x):
+    return tuple(x.get_shape().as_list())
