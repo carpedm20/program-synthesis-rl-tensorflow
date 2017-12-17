@@ -1,2 +1,4 @@
+ply
 tqdm
-tensorflow=1.14.1
+karel
+tensorflow
