@@ -1,8 +1,10 @@
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.util import nest
 from tensorflow.contrib.rnn import RNNCell, LSTMCell, MultiRNNCell
-from tensorflow.contrib.seq2seq import TrainingHelper, InferenceHelper, BasicDecoder
+from tensorflow.contrib.seq2seq import TrainingHelper, GreedyEmbeddingHelper, BasicDecoder
 
+from .encoder import linear
 
 class Decoder(object):
     """ B: batch_size
@@ -13,6 +15,9 @@ class Decoder(object):
         """ codes: [B, L]
             encoder_out: [BxN, 512]
         """
+        batch_size = tf.shape(codes)[0]
+        token_num = dataset.token_num
+
         with tf.variable_scope("decoder"):
             # [BxN, L, 512]
             tiled_cnn_out = tf.tile(
@@ -32,32 +37,58 @@ class Decoder(object):
             # [BxN, L, 768]
             rnn_input = tf.concat([code_embed, tiled_cnn_out], -1)
 
+            shape = tf.shape(rnn_input)
+            batch_times_N, L, input_dim = shape[0], shape[1], shape[2]
+
             decoder_cell = MultiRNNCell([
                     LSTMCell(256),
                     LSTMCell(256)], state_is_tuple=True)
 
-            batch_size = tf.shape(rnn_input)[0] # BxN
-
             # [BxN, L, 256]
-            decoder_rnn = build_rnn(
-                    config, decoder_cell, batch_size, "decoder_rnn",
-                    inputs=tiled_code_embed, sequence_length=code_lengths)
+            tiled_decoder_out = build_rnn(
+                    config,
+                    cell=decoder_cell,
+                    inputs=tiled_code_embed,
+                    batch_size=batch_times_N,
+                    name="decoder_rnn",
+                    target_lengths=code_lengths)
+
+            # [B, N, L, 256]
+            decoder_out = tf.reshape(
+                    tiled_decoder_out,
+                    [batch_size, config.num_examples, L, 256])
+
+            # [B, L, 256]
+            max_pool = tf.reduce_max(decoder_out, 1)
+
+            decoder_logits = linear(max_pool, token_num, "out")
 
         if config.use_syntax:
             syntax_cell = MultiRNNCell([
                     LSTMCell(256),
-                    LSTMCell(256)], state_is_tuple=True, name="syntax_cell")
+                    LSTMCell(256)], state_is_tuple=True)
 
-            # [BxN, L, 256]
-            syntax_rnn = build_rnn(
-                    config, syntax_cell, inputs, batch_size, name="syntax_rnn",
-                    inputs=tiled_code_embed, sequence_length=code_lengths)
+            # [B, L, 256]
+            syntax_out = build_rnn(
+                    config,
+                    cell=syntax_cell,
+                    inputs=code_embed,
+                    batch_size=batch_size,
+                    name="syntax_rnn",
+                    target_lengths=code_lengths)
 
-def build_rnn(config, cell, batch_size, name, inputs=None, sequence_length=None):
+            syntax_logits = linear(max_pool, token_num, "out")
+
+            raise NotImplementedError("TODO")
+            decoder_logits = decoder_logits + syntax_logits
+
+        self.logits = decoder_logits
+
+def build_rnn(config, cell, inputs, batch_size, name, target_lengths=None):
     if config.train:
-        helper = TrainingHelper(inputs, sequence_length)
+        helper = TrainingHelper(inputs, target_lengths)
     else:
-        helper = InferenceHelper()
+        helper = GreedyEmbeddingHelper(inputs, end_token=0)
 
     initial_state = cell.zero_state(
             batch_size=batch_size, dtype=tf.float32)
@@ -65,7 +96,7 @@ def build_rnn(config, cell, batch_size, name, inputs=None, sequence_length=None)
     (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
             BasicDecoder(cell, helper, initial_state), scope=name)
 
-    return decoder_outputs, final_decoder_state
+    return decoder_outputs
 
 
 class ConcatOutputAndAttentionWrapper(RNNCell):

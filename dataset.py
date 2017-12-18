@@ -4,13 +4,16 @@ import tensorflow as tf
 from collections import namedtuple
 
 from karel import KarelParser
-from karel import str2bool, makedirs, pprint, beautify
+from karel import str2bool, makedirs, pprint, beautify, TimeoutError
 
 from utils import get_rng
 
 Data = namedtuple('Data', 'input, output, code')
 
 class Dataset(object):
+    tokens = []
+    idx_to_token = {}
+
     def __init__(self, config, rng=None, shuffle=False):
         self.config = config
         self.rng = get_rng(rng)
@@ -73,11 +76,18 @@ class Dataset(object):
     def load_data(self):
         raise NotImplementedError
 
+    @property
+    def token_num(self):
+        return len(self.tokens)
+
 class KarelDataset(Dataset):
     def __init__(self, config, *args, **kwargs):
         super(KarelDataset, self).__init__(config, *args, **kwargs)
 
         self.parser = KarelParser()
+
+        self.tokens = ['END'] + self.parser.tokens
+        self.idx_to_token = { idx: token for idx, token in enumerate(self.tokens) }
 
     def load_data(self):
         self.data = {}
@@ -170,9 +180,14 @@ if __name__ == '__main__':
                     inputs.append(input_examples)
                     outputs.append(output_examples)
 
-                    token_idxes = parser.lex(code)
-                    codes.append(token_idxes)
-                    code_lengths.append(len(token_idxes))
+                    token_idxes = parser.lex_to_idx(code)
+
+                    # Add END tokens for seq2seq prediction
+                    token_idxes = np.array(token_idxes, dtype=np.uint8) + 1
+                    token_idxes_with_end = np.append(token_idxes, [0])
+
+                    codes.append(token_idxes_with_end)
+                    code_lengths.append(len(token_idxes_with_end))
                     break
 
             npz_path = os.path.join(config.data_dir, name)
