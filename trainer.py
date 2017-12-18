@@ -4,20 +4,17 @@ from models import encoder, decoder
 
 from models import Model
 from dataset import KarelDataset
-from karel.parser import KarelParser
 
 class Trainer(object):
     def __init__(self, config, sess, rng=None):
         self.sess = sess
         self.config = config
 
-        self.karel_dataset = KarelDataset(config, rng)
+        self.dataset = KarelDataset(config, rng)
 
     def train(self):
-        token_num = len(KarelParser.tokens)
-        inputs, outputs, codes = self.karel_dataset.get_data('train')
-
-        self.model = Model(self.config, inputs, outputs, codes, token_num)
+        inputs, outputs, codes = self.dataset.get_data('train')
+        self.model = Model(self.config, inputs, outputs, codes, self.dataset)
 
         for epoch in range(self.config.epoch):
             self.model.update(self.sess)

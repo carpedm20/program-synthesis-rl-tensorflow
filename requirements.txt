@@ -1,4 +1,6 @@
 ply
 tqdm
+ipdb
 karel
+pyparsing
 tensorflow

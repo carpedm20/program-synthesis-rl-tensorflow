@@ -6,7 +6,7 @@ class Model(object):
         self.config = config
 
         self.encoder_out = encoder_fn(inputs, outputs)
-        self.decoder = Decoder(self.encoder_out, codes)
+        self.decoder = Decoder(config, self.encoder_out, codes, dataset)
 
         self.optim = tf.train.AdamOptimizer(config.lr)
 

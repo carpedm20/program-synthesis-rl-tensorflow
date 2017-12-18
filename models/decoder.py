@@ -7,13 +7,14 @@ from tensorflow.contrib.seq2seq import TrainingHelper, InferenceHelper
 class Decoder(object):
     def __init__(
             self, config,
-            encoder_out, codes, karel_dataset):
+            encoder_out, codes, dataset):
 
         embed = tf.get_variable(
-                'embedding', [len(symbols), 256], dtype=tf.float32,
+                'embedding', [len(dataset.parser.tokens), 256], dtype=tf.float32,
                 initializer=tf.truncated_normal_initializer(stddev=0.5))
 
-        code_embed= tf.nn.embedding_lookup(embed, code)
+        import ipdb; ipdb.set_trace() 
+        code_embed = tf.nn.embedding_lookup(embed, codes)
 
         rnn_cell = MultiRNNCell([
                 ConcatOutputAndAttentionWrapper(encoder_out),

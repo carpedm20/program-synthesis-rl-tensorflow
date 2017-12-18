@@ -3,6 +3,9 @@ import numpy as np
 import tensorflow as tf
 from collections import namedtuple
 
+from karel import KarelParser
+from karel import str2bool, makedirs, pprint, beautify
+
 from utils import get_rng
 
 Data = namedtuple('Data', 'input, output, code')
@@ -33,18 +36,22 @@ class Dataset(object):
             self.codes[name] = codes
 
     def build_tf_data(self, name):
-        tf_data = tf.data.Dataset.from_tensor_slices((
-                self._inputs[name], self._outputs[name], self._codes[name],
-        ))
-
         if self.config.train:
             batch_size = self.config.batch_size
         else:
             batch_size = 1
 
-        batched_data = tf_data.batch(batch_size)
-        iterator = batched_data.make_one_shot_iterator()
-        inputs, outputs, codes = iterator.get_next()
+        # inputs, outputs
+        in_out = tf.data.Dataset.from_tensor_slices((
+                self._inputs[name], self._outputs[name]
+        ))
+        batched_in_out = in_out.batch(batch_size)
+        inputs, outputs = batched_in_out.make_one_shot_iterator().get_next()
+
+        # codes
+        code = tf.data.Dataset.from_generator(lambda: self._codes[name], tf.int32)
+        batched_code = code.padded_batch(batch_size, padded_shapes=[None])
+        codes = batched_code.make_one_shot_iterator().get_next()
 
         inputs = tf.cast(inputs, tf.float32)
         outputs = tf.cast(outputs, tf.float32)
@@ -67,6 +74,8 @@ class KarelDataset(Dataset):
     def __init__(self, config, *args, **kwargs):
         super(KarelDataset, self).__init__(config, *args, **kwargs)
 
+        self.parser = KarelParser()
+
     def load_data(self):
         self.data = {}
         for name in self.data_names:
@@ -87,9 +96,6 @@ if __name__ == '__main__':
     import argparse
     import numpy as np
 
-    from karel import KarelParser
-    from karel import str2bool, makedirs, pprint, beautify
-
     try:
         from tqdm import trange
     except:
@@ -101,7 +107,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--val_num', type=int, default=5000)
     arg_parser.add_argument('--data_dir', type=str, default='data')
     arg_parser.add_argument('--max_depth', type=int, default=5)
-    arg_parser.add_argument('--mode', type=str, default='all')
+    arg_parser.add_argument('--mode', type=str, default='token', choices=['text', 'token'])
     arg_parser.add_argument('--beautify', type=str2bool, default=False)
     arg_parser.add_argument('--world_height', type=int, default=8, help='Height of square grid world')
     arg_parser.add_argument('--world_width', type=int, default=8, help='Width of square grid world')
@@ -140,6 +146,7 @@ if __name__ == '__main__':
                     input = parser.get_state()
 
                     code = parser.random_code(stmt_max_depth=args.max_depth)
+                    #pprint(code)
 
                     try:
                         parser.run(code)
@@ -151,12 +158,7 @@ if __name__ == '__main__':
 
                     inputs.append(input)
                     outputs.append(output)
-
-                    if args.beautify:
-                        code = beautify(code)
-                    codes.append(code)
-
-                    #pprint(code)
+                    codes.append(parser.lex(code))
                     break
 
             npz_path = os.path.join(args.data_dir, name)
