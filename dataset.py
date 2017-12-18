@@ -77,7 +77,7 @@ class Dataset(object):
         raise NotImplementedError
 
     @property
-    def token_num(self):
+    def num_token(self):
         return len(self.tokens)
 
 class KarelDataset(Dataset):
