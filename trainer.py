@@ -13,8 +13,8 @@ class Trainer(object):
         self.dataset = KarelDataset(config, rng)
 
     def train(self):
-        inputs, outputs, codes = self.dataset.get_data('train')
-        self.model = Model(self.config, inputs, outputs, codes, self.dataset)
+        inputs, outputs, codes, code_lengths = self.dataset.get_data('train')
+        self.model = Model(self.config, inputs, outputs, codes, code_lengths, self.dataset)
 
         for epoch in range(self.config.epoch):
             self.model.update(self.sess)

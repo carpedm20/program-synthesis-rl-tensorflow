@@ -13,17 +13,23 @@ def add_argument_group(name):
 
 # Network
 net_arg = add_argument_group('Network')
-net_arg.add_argument('--kernel_dims', type=eval, default='[]', help='')
-net_arg.add_argument('--stride_size', type=eval, default='[]', help='')
-net_arg.add_argument('--channel_dims', type=eval, default='[]', help='')
+net_arg.add_argument('--use_syntax', type=str2bool, default=False)
 
 # Data
 data_arg = add_argument_group('Data')
 data_arg.add_argument('--data_dir', type=str, default='data')
 data_arg.add_argument('--data_ext', type=str, default='npz')
-data_arg.add_argument('--world_height', type=int, default=8)
-data_arg.add_argument('--world_width', type=int, default=8)
+data_arg.add_argument('--world_height', type=int, default=8, help='Height of square grid world')
+data_arg.add_argument('--world_width', type=int, default=8, help='Width of square grid world')
 data_arg.add_argument('--max_marker_in_cell', type=int, default=1)
+
+data_arg.add_argument('--num_train', type=int, default=1000000)
+data_arg.add_argument('--num_test', type=int, default=5000)
+data_arg.add_argument('--num_val', type=int, default=5000)
+data_arg.add_argument('--num_examples', type=int, default=2)
+data_arg.add_argument('--max_depth', type=int, default=5)
+data_arg.add_argument('--mode', type=str, default='token', choices=['text', 'token'])
+data_arg.add_argument('--beautify', type=str2bool, default=False)
 
 # Train
 train_arg = add_argument_group('Train')

@@ -15,8 +15,8 @@ class Dataset(object):
         self.config = config
         self.rng = get_rng(rng)
 
-        self.inputs, self.outputs, self.codes = {}, {}, {}
-        self._inputs, self._outputs, self._codes = {}, {}, {}
+        self.inputs, self.outputs, self.codes, self.code_lengths = {}, {}, {}, {}
+        self._inputs, self._outputs, self._codes, self._code_lengths = {}, {}, {}, {}
 
         self.data_names = ['train', 'test', 'val']
         self.data_paths = {
@@ -29,11 +29,12 @@ class Dataset(object):
             self.shuffle()
 
         for name in self.data_names:
-            inputs, outputs, codes = self.build_tf_data(name)
+            inputs, outputs, codes, code_lengths = self.build_tf_data(name)
 
             self.inputs[name] = inputs
             self.outputs[name] = outputs
             self.codes[name] = codes
+            self.code_lengths[name] = code_lengths
 
     def build_tf_data(self, name):
         if self.config.train:
@@ -43,23 +44,25 @@ class Dataset(object):
 
         # inputs, outputs
         in_out = tf.data.Dataset.from_tensor_slices((
-                self._inputs[name], self._outputs[name]
+                self._inputs[name], self._outputs[name], self._code_lengths[name]
         ))
         batched_in_out = in_out.batch(batch_size)
-        inputs, outputs = batched_in_out.make_one_shot_iterator().get_next()
 
         # codes
         code = tf.data.Dataset.from_generator(lambda: self._codes[name], tf.int32)
         batched_code = code.padded_batch(batch_size, padded_shapes=[None])
-        codes = batched_code.make_one_shot_iterator().get_next()
+
+        batched_data = tf.data.Dataset.zip((batched_in_out, batched_code))
+        (inputs, outputs, code_lengths), codes = batched_data.make_one_shot_iterator().get_next()
 
         inputs = tf.cast(inputs, tf.float32)
         outputs = tf.cast(outputs, tf.float32)
+        code_lengths = tf.cast(code_lengths, tf.int32)
 
-        return inputs, outputs, codes
+        return inputs, outputs, codes, code_lengths
 
     def get_data(self, name):
-        return self.inputs[name], self.outputs[name], self.codes[name]
+        return self.inputs[name], self.outputs[name], self.codes[name], self.code_lengths[name]
 
     def count(self, name):
         return len(self._inputs[name])
@@ -83,6 +86,7 @@ class KarelDataset(Dataset):
             self._inputs[name] = data['inputs']
             self._outputs[name] = data['outputs']
             self._codes[name] = data['codes']
+            self._code_lengths[name] = data['code_lengths']
 
     def shuffle(self):
         for name in self.data_names:
@@ -100,36 +104,27 @@ if __name__ == '__main__':
         from tqdm import trange
     except:
         trange = range
-
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--train_num', type=int, default=1000000)
-    arg_parser.add_argument('--test_num', type=int, default=5000)
-    arg_parser.add_argument('--val_num', type=int, default=5000)
-    arg_parser.add_argument('--data_dir', type=str, default='data')
-    arg_parser.add_argument('--max_depth', type=int, default=5)
-    arg_parser.add_argument('--mode', type=str, default='token', choices=['text', 'token'])
-    arg_parser.add_argument('--beautify', type=str2bool, default=False)
-    arg_parser.add_argument('--world_height', type=int, default=8, help='Height of square grid world')
-    arg_parser.add_argument('--world_width', type=int, default=8, help='Width of square grid world')
-    args = arg_parser.parse_args()
+    
+    from config import get_config
+    config, _ = get_config()
 
     # Make directories
-    makedirs(args.data_dir)
+    makedirs(config.data_dir)
     datasets = ['train', 'test', 'val']
 
     # Generate datasets
     parser = KarelParser()
 
-    if args.mode == 'text':
+    if config.mode == 'text':
         for name in datasets:
-            data_num = getattr(args, "{}_num".format(name))
+            data_num = getattr(config, "num_{}".format(name))
 
             text = ""
-            text_path = os.path.join(args.data_dir, "{}.txt".format(name))
+            text_path = os.path.join(config.data_dir, "{}.txt".format(name))
 
             for _ in trange(data_num):
-                code = parser.random_code(stmt_max_depth=args.max_depth)
-                if args.beautify:
+                code = parser.random_code(stmt_max_depth=config.max_depth)
+                if config.beautify:
                     code = beautify(code)
                 text += code  + "\n"
 
@@ -137,29 +132,52 @@ if __name__ == '__main__':
                 f.write(text)
     else:
         for name in datasets:
-            data_num = getattr(args, "{}_num".format(name))
+            data_num = getattr(config, "num_{}".format(name))
 
-            inputs, outputs, codes = [], [], []
+            inputs, outputs, codes, code_lengths = [], [], [], []
             for _ in trange(data_num):
                 while True:
-                    parser.new_game(world_size=(args.world_width, args.world_height))
-                    input = parser.get_state()
+                    input_examples, output_examples = [], []
 
-                    code = parser.random_code(stmt_max_depth=args.max_depth)
+                    code = parser.random_code(stmt_max_depth=config.max_depth)
                     #pprint(code)
 
-                    try:
-                        parser.run(code)
-                        output = parser.get_state()
-                    except TimeoutError:
-                        continue
-                    except IndexError:
+                    num_code_error, resample_code = 0, False
+                    while len(input_examples) < config.num_examples:
+                        if num_code_error > 5:
+                            resample_code = True
+                            break
+
+                        parser.new_game(world_size=(config.world_width, config.world_height))
+                        input = parser.get_state()
+
+                        try:
+                            parser.run(code)
+                            output = parser.get_state()
+                        except TimeoutError:
+                            num_code_error += 1
+                            continue
+                        except IndexError:
+                            num_code_error += 1
+                            continue
+
+                        input_examples.append(input)
+                        output_examples.append(output)
+
+                    if resample_code:
                         continue
 
-                    inputs.append(input)
-                    outputs.append(output)
-                    codes.append(parser.lex(code))
+                    inputs.append(input_examples)
+                    outputs.append(output_examples)
+
+                    token_idxes = parser.lex(code)
+                    codes.append(token_idxes)
+                    code_lengths.append(len(token_idxes))
                     break
 
-            npz_path = os.path.join(args.data_dir, name)
-            np.savez(npz_path, inputs=inputs, outputs=outputs, codes=codes)
+            npz_path = os.path.join(config.data_dir, name)
+            np.savez(npz_path,
+                     inputs=inputs,
+                     outputs=outputs,
+                     codes=codes,
+                     code_lengths=code_lengths)
