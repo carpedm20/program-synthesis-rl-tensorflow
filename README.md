@@ -8,8 +8,9 @@ TensorFlow implementation of [Leveraging Grammar and Reinforcement Learning for 
 ## Requirements
 
 - Python 2.7+
-- [TensorFlow](https://www.tensorflow.org/) 1.4.1
 - [tqdm](https://github.com/tqdm/tqdm)
+- [karel](https://github.com/carpedm20/karel)
+- [TensorFlow](https://www.tensorflow.org/) 1.4.1
 
 ## Usage
 

@@ -22,7 +22,7 @@ def main(_):
     with tf.train.MonitoredTrainingSession(
             is_chief=True,
             checkpoint_dir=config.model_path,
-            hooks=[ tf.train.SummarySaverHook() ],
+            #hooks=[ tf.train.SummarySaverHook() ],
             config=sess_config) as sess:
         while not sess.should_stop():
             if config.train:

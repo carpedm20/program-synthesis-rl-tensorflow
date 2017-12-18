@@ -27,6 +27,8 @@ class Model(object):
                              .minimize(self.loss, self.global_step)
 
     def build_summary(self, sess):
+        tf.summary.scalar(self.mle_loss, "mle_loss")
+        tf.summary.scalar(self.loss, "loss")
 
     def update(self, sess):
         sess.run(self.optim)
