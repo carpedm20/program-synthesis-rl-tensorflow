@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMCell, MultiRNNCell
 
-def encoder_fn(inputs, outputs, codes, dataset):
+def encoder(inputs, outputs, codes, dataset):
     input_shape = int_shape(inputs)
     output_shape = int_shape(outputs)
 

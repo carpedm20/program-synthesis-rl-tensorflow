@@ -27,23 +27,17 @@ To train a model:
     $ python main.py
     $ tensorboard --logdir=logs --host=0.0.0.0
 
-To synthesize a Karel program given an input/output pair:
-
-    $ python main.py --test=True --map=examples/test.map
-
-To run Karel interpreter:
-
-    $ python -m karel.interpreter KAREL MAP
-    $ python -m karel.interpreter ./examples/simple.karel ./examples/simple.map
-
 
 ## Results
+
+Currently, only maximum likelihood optimization is implemented. Expected correctness and RL is in progress.
 
 (in progress)
 
 
 ## References
 
+- [Karel dataset](https://github.com/carpedm20/karel)
 - [Neural Program Meta-Induction](https://arxiv.org/abs/1710.04157)
 
 

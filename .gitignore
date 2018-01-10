@@ -3,12 +3,12 @@ logs
 
 # Data
 data
+*.prog
 *.txt
 *.npz
 *.out
 
 # ply
-karel
 *parser.out
 *parsetab.py
 

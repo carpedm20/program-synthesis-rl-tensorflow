@@ -9,7 +9,7 @@ from functools import wraps
 from datetime import datetime
 from pyparsing import nestedExpr
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("main")
 
 
 def get_time():
@@ -32,14 +32,14 @@ class Tcolors:
 class TimeoutError(Exception):
     pass
 
-def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+def timeout_fn(timeout=10, error_message=os.strerror(errno.ETIME)):
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
             signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.setitimer(signal.ITIMER_REAL,seconds) #used timer instead of alarm
+            signal.setitimer(signal.ITIMER_REAL, timeout) #used timer instead of alarm
             try:
                 result = func(*args, **kwargs)
             finally:
@@ -121,7 +121,11 @@ def prepare(config):
     logger.setLevel(tf.logging.INFO)
 
     if config.model_path is None:
-        config.model_name = "{}_{}".format(config.tag, get_time())
+        if config.tag is not None:
+            config.model_name = "{}_{}_{}".format(config.data_dir, config.tag, get_time())
+        else:
+            config.model_name = "{}_{}".format(config.data_dir, get_time())
+
         config.model_path = os.path.join(config.base_dir, config.model_name)
 
         makedirs(config.model_path)

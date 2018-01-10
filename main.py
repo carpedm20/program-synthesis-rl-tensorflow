@@ -1,12 +1,15 @@
+from utils import prepare, set_random_seed
+
+import os
 import sys
 import numpy as np
 import tensorflow as tf
 
 from trainer import Trainer
 from config import get_config
-from utils import prepare, set_random_seed
 
 config = None
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def main(_):
     prepare(config)
@@ -19,18 +22,15 @@ def main(_):
 
     trainer = Trainer(config, rng)
 
-    with tf.train.MonitoredTrainingSession(
-            is_chief=True,
-            checkpoint_dir=config.model_path,
-            #hooks=[ tf.train.SummarySaverHook() ],
-            config=sess_config) as sess:
-        while not sess.should_stop():
-            if config.train:
-                trainer.train(sess)
-            else:
-                if not config.map:
-                    raise Exception("[!] You should specify `map` to synthesize a program")
-                trainer.synthesize(sess, config.map)
+    with tf.Session(config=sess_config) as sess:
+        if config.train:
+            coord = tf.train.Coordinator()
+            while not coord.should_stop():
+                trainer.train(sess, coord)
+        else:
+            if not config.map:
+                raise Exception("[!] You should specify `map` to synthesize a program")
+            trainer.synthesize(sess, config.map)
 
 if __name__ == "__main__":
     config, unparsed = get_config()

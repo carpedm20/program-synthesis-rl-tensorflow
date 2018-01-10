@@ -11,27 +11,60 @@ def add_argument_group(name):
     arg_lists.append(arg)
     return arg
 
+
+################
 # Network
+################
+
 net_arg = add_argument_group('Network')
 net_arg.add_argument('--use_syntax', type=str2bool, default=False)
+net_arg.add_argument('--rl_mode', type=int, default=0,
+                     help='0: no reinforcement learning'
+                          '1: vainlla policy gradient'
+                          '2: self-critical policy gradient')
+net_arg.add_argument('--entropy_penalty', type=float, default=0.)
+net_arg.add_argument('--use_beam', type=str2bool, default=False)
+net_arg.add_argument('--beam_width', type=int, default=64)
 
+################
 # Data
+################
+
 data_arg = add_argument_group('Data')
 data_arg.add_argument('--data_dir', type=str, default='data')
 data_arg.add_argument('--data_ext', type=str, default='npz')
+data_arg.add_argument('--mode', type=str, default='token', choices=['text', 'token'])
+data_arg.add_argument('--beautify', type=str2bool, default=False)
+data_arg.add_argument('--max_code_length', type=int, default=110)
+
+# grid world
 data_arg.add_argument('--world_height', type=int, default=8, help='Height of square grid world')
 data_arg.add_argument('--world_width', type=int, default=8, help='Width of square grid world')
-data_arg.add_argument('--max_marker_in_cell', type=int, default=1)
+data_arg.add_argument('--max_marker_in_cell', type=int, default=8)
+data_arg.add_argument('--wall_ratio', type=float, default=0.1)
+data_arg.add_argument('--marker_ratio', type=float, default=0.1)
 
+# # of data
 data_arg.add_argument('--num_train', type=int, default=1000000)
 data_arg.add_argument('--num_test', type=int, default=5000)
 data_arg.add_argument('--num_val', type=int, default=5000)
-data_arg.add_argument('--num_examples', type=int, default=2)
-data_arg.add_argument('--max_depth', type=int, default=5)
-data_arg.add_argument('--mode', type=str, default='token', choices=['text', 'token'])
-data_arg.add_argument('--beautify', type=str2bool, default=False)
+data_arg.add_argument('--num_spec', type=int, default=5)
+data_arg.add_argument('--num_heldout', type=int, default=1)
 
+# program limitations
+data_arg.add_argument('--min_int', type=int, default=0)
+data_arg.add_argument('--max_int', type=int, default=19)
+#data_arg.add_argument('--max_int', type=int, default=2)
+data_arg.add_argument('--min_depth', type=int, default=3)
+data_arg.add_argument('--max_depth', type=int, default=4)
+data_arg.add_argument('--min_move', type=int, default=0)
+data_arg.add_argument('--max_func_call', type=int, default=100,
+                      help="Max # of function call in a single run")
+
+################
 # Train
+################
+
 train_arg = add_argument_group('Train')
 train_arg.add_argument('--base_dir', type=str, default='logs')
 train_arg.add_argument('--model_path', type=str, default=None,
@@ -40,21 +73,31 @@ train_arg.add_argument('--pretrain_path', type=str, default=None)
 train_arg.add_argument('--epoch', type=int, default=100)
 train_arg.add_argument('--lr', type=float, default=0.001)
 train_arg.add_argument('--seed', type=int, default=123)
-train_arg.add_argument('--use_rl', type=str2bool, default=False)
-train_arg.add_argument('--batch_size', type=int, default=64)
+train_arg.add_argument('--batch_size', type=int, default=32)
+train_arg.add_argument('--max_step', type=int, default=2000000)
 
+################
 # Test
+################
+
 test_arg = add_argument_group('Test')
 test_arg.add_argument('--world', type=str, default=None)
 
+################
 # ETC
+################
+
 etc_arg = add_argument_group('ETC')
 etc_arg.add_argument('--train', type=str2bool, default=True,
                      help='whether run under train or test mode')
-etc_arg.add_argument('--tag', type=str, default='karel')
-etc_arg.add_argument('--log_level', type=str, default='info')
+etc_arg.add_argument('--tag', type=str, default=None)
+etc_arg.add_argument('--log_step', type=int, default=100)
+etc_arg.add_argument('--checkpoint_step', type=int, default=5000)
+etc_arg.add_argument('--max_summary', type=int, default=3)
+etc_arg.add_argument('--debug', type=str2bool, default=False)
+etc_arg.add_argument('--parser_debug', type=str2bool, default=False)
 
 
 def get_config():
-    config, unparsed = parser.parse_known_args()
-    return config, unparsed
+    config = parser.parse_args()
+    return config, []
